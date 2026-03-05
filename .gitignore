@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+protac_designer.db
+data/structures/
+models/outputs/
+*.pt
+*.log

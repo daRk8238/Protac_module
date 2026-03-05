@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PROTAC Designer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+:root{--bg:#050d1a;--bg2:#081425;--bg3:#0c1e38;--panel:#0d2040;--border:#1a3a5c;--border2:#234d7a;--cyan:#00e5ff;--green:#00ff9d;--yellow:#ffd60a;--red:#ff4d6d;--text:#d0e8ff;--text2:#7aadcc;--text3:#3d6e8a;--mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;--display:'Orbitron',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+#root{position:relative;z-index:1}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.header{padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(5,13,26,.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--display);font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:2px;text-shadow:0 0 20px rgba(0,229,255,.5)}
+.logo span{color:var(--green)}
+.hst{display:flex;align-items:center;gap:20px;font-family:var(--mono);font-size:11px;color:var(--text3)}
+.sdot{width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{display:flex;flex:1}
+.sidebar{width:260px;min-height:calc(100vh - 64px);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;background:rgba(8,20,37,.6);flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .2s;border:1px solid transparent}
+.nav-item:hover{background:var(--panel);color:var(--text);border-color:var(--border)}
+.nav-item.active{background:rgba(0,229,255,.08);color:var(--cyan);border-color:rgba(0,229,255,.25)}
+.nsec{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px;padding:16px 14px 6px;text-transform:uppercase}
+.content{flex:1;padding:32px;overflow-y:auto}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px}
+.ct{font-family:var(--display);font-size:11px;letter-spacing:2px;color:var(--cyan);margin-bottom:16px;text-transform:uppercase}
+input,textarea,select{background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 14px;outline:none;transition:border-color .2s;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.1)}
+textarea{resize:vertical}
+label{display:block;font-size:11px;color:var(--text2);margin-bottom:6px;font-family:var(--mono);letter-spacing:.5px}
+.btn{padding:10px 20px;border-radius:6px;border:1px solid;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;background:transparent}
+.btn-p{border-color:var(--cyan);color:var(--cyan)}
+.btn-p:hover{background:rgba(0,229,255,.15);box-shadow:0 0 16px rgba(0,229,255,.3)}
+.btn-g{border-color:var(--green);color:var(--green)}
+.btn-g:hover{background:rgba(0,255,157,.15);box-shadow:0 0 16px rgba(0,255,157,.3)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--bg3)}
+th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--cyan)}
+td{padding:10px 14px;border-bottom:1px solid rgba(26,58,92,.4);font-family:var(--mono);font-size:11px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,229,255,.02)}
+.sbw{display:flex;align-items:center;gap:8px}
+.sb{height:4px;border-radius:2px;background:var(--border);flex:1;min-width:60px;overflow:hidden}
+.sbf{height:100%;border-radius:2px}
+.sv{font-size:11px;font-family:var(--mono);min-width:36px;text-align:right}
+.flag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.5px}
+.f-ok{background:rgba(0,255,157,.15);color:var(--green)}
+.f-bad{background:rgba(255,77,109,.15);color:var(--red)}
+.f-w{background:rgba(255,214,10,.15);color:var(--yellow)}
+.f-na{background:rgba(61,110,138,.15);color:var(--text3)}
+.sw{position:relative}
+.sugs{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;z-index:200;max-height:280px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.si{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+.si:last-child{border-bottom:none}
+.si:hover{background:rgba(0,229,255,.07)}
+.sg{font-family:var(--mono);font-size:12px;color:var(--cyan);font-weight:700}
+.sn{font-size:11px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.so{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.sbg{float:right;font-size:9px;background:rgba(0,229,255,.1);color:var(--cyan);padding:1px 5px;border-radius:2px;font-family:var(--mono)}
+.sc{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);cursor:pointer}
+.sc:hover{color:var(--cyan)}
+.cb{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;font-size:12px}
+.cb:hover{color:var(--cyan)}
+.sr2{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stc{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px 20px}
+.sv2{font-family:var(--display);font-size:28px;color:var(--cyan);font-weight:700;line-height:1;text-shadow:0 0 20px rgba(0,229,255,.3)}
+.sl{font-size:11px;color:var(--text2);margin-top:4px;font-family:var(--mono)}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lr{display:flex;align-items:center;gap:12px;padding:24px;color:var(--text2);font-family:var(--mono);font-size:12px}
+.eb{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);border-radius:6px;padding:12px 16px;color:var(--red);font-family:var(--mono);font-size:12px;margin-bottom:14px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.c2{grid-column:span 2}
+.dp{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:20px}
+.di label{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.di .dv{font-family:var(--mono);font-size:13px;color:var(--text)}
+.fi{animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+const API='http://localhost:8000';
+const req=async(path,opts={})=>{
+  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
+  if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'Error');}
+  return r.json();
+};
+const copy=t=>navigator.clipboard.writeText(t).catch(()=>{});
+const fmt=(v,d=2)=>v==null?React.createElement('span',{style:{color:'var(--text3)'}},'—'):typeof v==='number'?v.toFixed(d):v;
+
+const ScoreBar=({value,max=1,color='var(--cyan)'})=>{
+  if(value==null)return React.createElement('span',{style:{color:'var(--text3)',fontSize:11}},'—');
+  return React.createElement('div',{className:'sbw'},
+    React.createElement('div',{className:'sb'},React.createElement('div',{className:'sbf',style:{width:`${Math.min(100,value/max*100)}%`,background:color}})),
+    React.createElement('span',{className:'sv',style:{color}},value.toFixed(3))
+  );
+};
+const Flag=({val,good,label})=>{
+  const isGood=good!=null?good:!!val;
+  return React.createElement('span',{className:`flag ${isGood?'f-ok':'f-bad'}`},label||(val?'YES':'NO'));
+};
+const SC=({s})=>React.createElement('div',{style:{display:'flex',alignItems:'center',gap:4}},
+  React.createElement('span',{className:'sc',title:s},s),
+  React.createElement('button',{className:'cb',onClick:()=>copy(s)},'⎘')
+);
+const Spin=()=>React.createElement('div',{className:'spinner'});
+
+const PAGES=[
+  {id:'dash',icon:'⬡',label:'Dashboard'},
+  {id:'search',icon:'◎',label:'Target Search'},
+  {id:'predict',icon:'⟐',label:'Predict Affinity'},
+  {id:'scaffold',icon:'⬡',label:'Scaffold Hop'},
+  {id:'protac',icon:'⬢',label:'PROTAC Design'},
+  {id:'score',icon:'◈',label:'Score & Rank'},
+];
+
+const Sidebar=({page,set})=>React.createElement('nav',{className:'sidebar'},
+  React.createElement('div',{className:'nsec'},'Navigation'),
+  ...PAGES.map(p=>React.createElement('div',{key:p.id,className:`nav-item${page===p.id?' active':''}`,onClick:()=>set(p.id)},
+    React.createElement('span',{style:{width:20,textAlign:'center'}},p.icon),p.label))
+);
+
+// DASHBOARD
+const Dash=({health})=>{
+  const [tgts,setTgts]=useState(null);
+  useEffect(()=>{req('/api/targets').then(setTgts).catch(()=>{});},[]);
+  const stats=[
+    {l:'COMPOUNDS',v:health?.db_compounds??'—',c:'var(--cyan)'},
+    {l:'TARGETS',v:health?.db_targets??'—',c:'var(--green)'},
+    {l:'ACTIVITIES',v:health?.db_activities??'—',c:'var(--yellow)'},
+    {l:'MODEL',v:health?.model_loaded?'LOADED':'OFFLINE',c:health?.model_loaded?'var(--green)':'var(--red)'},
+  ];
+  return React.createElement('div',{className:'fi'},
+    React.createElement('div',{style:{marginBottom:28}},
+      React.createElement('div',{style:{fontFamily:'var(--display)',fontSize:22,color:'var(--cyan)',fontWeight:900,letterSpacing:2,marginBottom:6}},'MISSION CONTROL'),
+      React.createElement('div',{style:{color:'var(--text2)',fontSize:13}},'AI-driven modulator & PROTAC design pipeline')
+    ),
+    React.createElement('div',{className:'sr2'},
+      ...stats.map(s=>React.createElement('div',{key:s.l,className:'stc'},
+        React.createElement('div',{className:'sv2',style:{color:s.c,fontSize:typeof s.v==='string'&&s.v.length>5?18:28}},s.v),
+        React.createElement('div',{className:'sl'},s.l)
+      ))
+    ),
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'ct'},'Active Targets'),
+      !tgts?React.createElement('div',{className:'lr'},React.createElement(Spin),'Loading...'):
+      tgts.total===0?React.createElement('div',{style:{padding:32,textAlign:'center',color:'var(--text3)',fontFamily:'var(--mono)',fontSize:12}},'No targets yet. Use Target Search to add one.'):
+      React.createElement('div',{className:'tw'},
+        React.createElement('table',null,
+          React.createElement('thead',null,React.createElement('tr',null,...['Gene','Protein','UniProt','PDB','Compounds','Activities'].map(h=>React.createElement('th',{key:h},h)))),
+          React.createElement('tbody',null,...tgts.targets.map(t=>React.createElement('tr',{key:t.uniprot_id},
+            React.createElement('td',{style:{color:'var(--cyan)',fontWeight:700}},t.gene_name||'—'),
+            React.createElement('td',{style:{maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},t.protein_name||'—'),
+            React.createElement('td',{style:{color:'var(--text2)'}},t.uniprot_id),
+            React.createElement('td',{style:{color:'var(--yellow)'}},t.pdb_id||'—'),
+            React.createElement('td',{style:{color:'var(--green)'}},t.compound_count),
+            React.createElement('td',null,t.activity_count)
+          )))
+        )
+      )
+    )
+  );
+};
+
+// TARGET SEARCH
+const Search=()=>{
+  const [q,setQ]=useState('');
+  const [sugs,setSugs]=useState([]);
+  const [res,setRes]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [ps,setPs]=useState(null);
+  const [js,setJs]=useState(null);
+  const [err,setErr]=useState(null);
+  const db=useRef(null);
+  const onQ=v=>{
+    setQ(v);setSugs([]);setRes(null);
+    clearTimeout(db.current);
+    if(v.length<2)return;
+    db.current=setTimeout(async()=>{try{const d=await req(`/api/search?q=${encodeURIComponent(v)}`);setSugs(d.suggestions||[]);}catch{}},350);
+  };
+  const pick=async s=>{
+    setQ(s.gene_name||s.uniprot_id);setSugs([]);setLoading(true);setErr(null);
+    try{const d=await req(`/api/search/resolve?q=${encodeURIComponent(s.uniprot_id||s.gene_name)}`);setRes(d);}
+    catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+  const run=async()=>{
+    if(!res?.result?.uniprot_id)return;
+    setLoading(true);setErr(null);setPs('running');
+    try{
+      const d=await req('/api/pipeline/run',{method:'POST',body:JSON.stringify({target:res.result.uniprot_id,max_activities:1000,max_structures:3,fetch_zinc:false,zinc_count:100,fetch_e3_binders:true})});
+      const iv=setInterval(async()=>{
+        try{const j=await req(`/api/jobs/${d.job_id}`);setJs(j);if(j.status==='complete'||j.status==='failed'){clearInterval(iv);setPs(j.status);}}
+        catch{clearInterval(iv);}
+      },2000);
+    }catch(e){setErr(e.message);setPs(null);}
+    setLoading(false);
+  };
+  return React.createElement('div',{className:'fi'},
+    React.createElement('div',{style:{fontFamily:'var(--display)',fontSize:18,color:'var(--cyan)',marginBottom:6,letterSpacing:2}},'TARGET SEARCH'),
+    React.createElement('div',{style:{color:'var(--text2)',fontSize:13,marginBottom:24}},'Search any protein by name, gene, or UniProt ID'),
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'ct'},'Search Protein'),
+      err&&React.createElement('div',{className:'eb'},err),
+      React.createElement('div',{className:'sw'},
+        React.createElement('input',{value:q,onChange:e=>onQ(e.target.value),placeholder:'EGFR, BRD4, sonic hedgehog, P00533...',style:{fontSize:14,padding:'12px 16px'}}),
+        sugs.length>0&&React.createElement('div',{className:'sugs'},
+          ...sugs.map(s=>React.createElement('div',{key:s.uniprot_id,className:'si',onClick:()=>pick(s)},
+            s.reviewed&&React.createElement('span',{className:'sbg'},'REVIEWED'),
+            React.createElement('div',{className:'sg'},s.gene_name||s.uniprot_id),
+            React.createElement('div',{className:'sn'},s.protein_name),
+            React.createElement('div',{className:'so'},`${s.uniprot_id} · ${s.organism}`)
+          ))
+        )
+      ),
+      loading&&React.createElement('div',{className:'lr'},React.createElement(Spin),'Resolving target...')
+    ),
+    res?.found&&React.createElement('div',{className:'card fi'},
+      React.createElement('div',{className:'ct'},'Resolved Target'),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}},
+        ...[['Gene',res.result.gene_name],['UniProt',res.result.uniprot_id],['ChEMBL',res.result.chembl_id||'—'],['Organism',res.result.organism],['Protein',res.result.protein_name],['Source',res.result.source]].map(([k,v])=>
+          React.createElement('div',{key:k,className:'di'},
+            React.createElement('label',null,k),
+            React.createElement('div',{className:'dv',style:{color:k==='UniProt'||k==='ChEMBL'?'var(--cyan)':'var(--text)'}},v||'—')
+          )
+        )
+      ),
+      ps==='complete'?React.createElement('div',{style:{color:'var(--green)',fontFamily:'var(--mono)',fontSize:12}},'✓ Target added to database successfully'):
+      ps==='failed'?React.createElement('div',{className:'eb'},js?.error||'Pipeline failed'):
+      ps==='running'?React.createElement('div',{className:'lr'},React.createElement(Spin),js?.progress||'Running pipeline...'):
+      React.createElement('button',{className:'btn btn-g',onClick:run,disabled:loading},'⟐ Add to Database & Fetch Data')
+    ),
+    res&&!res.found&&React.createElement('div',{className:'eb'},`Could not resolve "${q}". Try a UniProt ID or well-known gene name.`)
+  );
+};
+
+// PREDICT
+const Predict=()=>{
+  const [smiles,setSmiles]=useState('CCOc1cc2ncnc(Nc3cccc(Cl)c3F)c2cc1OCC\nCC(=O)Oc1ccccc1C(=O)O');
+  const [tid,setTid]=useState('P00533');
+  const [res,setRes]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const run=async()=>{
+    const list=smiles.split('\n').map(s=>s.trim()).filter(Boolean);
+    setLoading(true);setErr(null);
+    try{const d=await req('/api/predict',{method:'POST',body:JSON.stringify({smiles:list,target_uniprot:tid||null})});setRes(d);}
+    catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+  const dl=()=>{
+    if(!res)return;
+    const csv=['smiles,pchembl,ic50_nM,mw,logp,lipinski'].concat(
+      (res.results||[]).map(r=>`"${r.smiles||''}",${r.predicted_pchembl||''},${r.predicted_ic50_nM||''},${r.mol_weight||''},${r.logp||''},${r.passes_lipinski}`)
+    ).join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='predictions.csv';a.click();
+  };
+  return React.createElement('div',{className:'fi'},
+    React.createElement('div',{style:{fontFamily:'var(--display)',fontSize:18,color:'var(--cyan)',marginBottom:6,letterSpacing:2}},'AFFINITY PREDICTION'),
+    React.createElement('div',{style:{color:'var(--text2)',fontSize:13,marginBottom:24}},'GNN-predicted binding affinity for any SMILES'),
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'fg'},
+        React.createElement('div',null,
+          React.createElement('label',null,'SMILES (one per line)'),
+          React.createElement('textarea',{value:smiles,onChange:e=>setSmiles(e.target.value),rows:5,style:{fontFamily:'var(--mono)',fontSize:11}})
+        ),
+        React.createElement('div',null,
+          React.createElement('label',null,'Target UniProt (optional)'),
+          React.createElement('input',{value:tid,onChange:e=>setTid(e.target.value),placeholder:'P00533'}),
+          React.createElement('div',{style:{marginTop:14}},
+            React.createElement('button',{className:'btn btn-p',onClick:run,disabled:loading,style:{width:'100%',justifyContent:'center'}},
+              loading?React.createElement(React.Fragment,null,React.createElement(Spin),'Running...'):'⟐ Predict Affinity')
+          )
+        )
+      ),
+      err&&React.createElement('div',{className:'eb',style:{marginTop:12}},err)
+    ),
+    res&&React.createElement('div',{className:'card fi'},
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}},
+        React.createElement('div',{className:'ct',style:{marginBottom:0}},`${res.total_valid}/${res.total_submitted} valid`),
+        React.createElement('button',{className:'btn btn-sm btn-p',onClick:dl},'↓ CSV')
+      ),
+      React.createElement('div',{className:'tw'},
+        React.createElement('table',null,
+          React.createElement('thead',null,React.createElement('tr',null,...['SMILES','pChEMBL','IC50 (nM)','MW','LogP','Lipinski'].map(h=>React.createElement('th',{key:h},h)))),
+          React.createElement('tbody',null,...(res.results||[]).map((r,i)=>React.createElement('tr',{key:i},
+            React.createElement('td',null,React.createElement(SC,{s:r.smiles||'invalid'})),
+            React.createElement('td',null,r.predicted_pchembl!=null?React.createElement(ScoreBar,{value:r.predicted_pchembl,max:10,color:'var(--cyan)'}):React.createElement('span',{style:{color:'var(--red)',fontSize:11}},r.error||'invalid')),
+            React.createElement('td',{style:{color:'var(--yellow)'}},fmt(r.predicted_ic50_nM)),
+            React.createElement('td',null,fmt(r.mol_weight,1)),
+            React.createElement('td',null,fmt(r.logp)),
+            React.createElement('td',null,r.passes_lipinski!=null?React.createElement(Flag,{val:r.passes_lipinski,label:r.passes_lipinski?'PASS':'FAIL'}):React.createElement('span',{style:{color:'var(--text3)'}},'—'))
+          )))
+        )
+      )
+    )
+  );
+};
+
+// SCAFFOLD HOP
+const Scaffold=()=>{
+  const [smiles,setSmiles]=useState('CCOc1cc2ncnc(Nc3cccc(Cl)c3F)c2cc1OCC');
+  const [tid,setTid]=useState('P00533');
+  const [n,setN]=useState(20);
+  const [res,setRes]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const run=async()=>{
+    setLoading(true);setErr(null);
+    try{const d=await req('/api/generate/scaffold-hop/sync',{method:'POST',body:JSON.stringify({smiles,target_uniprot:tid||null,n_analogs:n,min_similarity:0.3,max_similarity:0.95,methods:['brics','bioisostere','rgroup']})});setRes(d);}
+    catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+  const dl=()=>{
+    if(!res)return;
+    const csv=['smiles,pchembl,ic50_nM,similarity,mw,logp,novel'].concat(
+      (res.candidates||[]).map(r=>`"${r.smiles}",${r.predicted_pchembl||''},${r.predicted_ic50_nM||''},${r.similarity_to_parent},${r.mol_weight},${r.logp},${r.is_novel}`)
+    ).join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='analogs.csv';a.click();
+  };
+  return React.createElement('div',{className:'fi'},
+    React.createElement('div',{style:{fontFamily:'var(--display)',fontSize:18,color:'var(--cyan)',marginBottom:6,letterSpacing:2}},'SCAFFOLD HOPPING'),
+    React.createElement('div',{style:{color:'var(--text2)',fontSize:13,marginBottom:24}},'Generate analogs via BRICS · bioisostere · R-group enumeration'),
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{style:{marginBottom:14}},
+        React.createElement('label',null,'Reference Active SMILES'),
+        React.createElement('input',{value:smiles,onChange:e=>setSmiles(e.target.value),style:{fontFamily:'var(--mono)',fontSize:12}})
+      ),
+      React.createElement('div',{className:'fg',style:{marginBottom:14}},
+        React.createElement('div',null,React.createElement('label',null,'Target UniProt (optional)'),React.createElement('input',{value:tid,onChange:e=>setTid(e.target.value)})),
+        React.createElement('div',null,React.createElement('label',null,'N Analogs'),React.createElement('input',{type:'number',value:n,onChange:e=>setN(+e.target.value),min:5,max:50}))
+      ),
+      React.createElement('button',{className:'btn btn-p',onClick:run,disabled:loading},
+        loading?React.createElement(React.Fragment,null,React.createElement(Spin),'Generating (30-60s)...'):'⬡ Generate Analogs'),
+      err&&React.createElement('div',{className:'eb',style:{marginTop:12}},err)
+    ),
+    res&&React.createElement('div',{className:'card fi'},
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}},
+        React.createElement('div',null,
+          React.createElement('div',{className:'ct',style:{marginBottom:4}},`${res.candidates?.length||0} Candidates`),
+          React.createElement('div',{style:{fontFamily:'var(--mono)',fontSize:11,color:'var(--text2)'}},'Scaffold: ',React.createElement('span',{style:{color:'var(--yellow)'}},res.parent_scaffold||'—'))
+        ),
+        React.createElement('button',{className:'btn btn-sm btn-p',onClick:dl},'↓ CSV')
+      ),
+      React.createElement('div',{className:'tw'},
+        React.createElement('table',null,
+          React.createElement('thead',null,React.createElement('tr',null,...['SMILES','pChEMBL','IC50 (nM)','Similarity','MW','LogP','Novel'].map(h=>React.createElement('th',{key:h},h)))),
+          React.createElement('tbody',null,...(res.candidates||[]).map((c,i)=>React.createElement('tr',{key:i},
+            React.createElement('td',null,React.createElement(SC,{s:c.smiles})),
+            React.createElement('td',null,React.createElement(ScoreBar,{value:c.predicted_pchembl,max:10,color:'var(--cyan)'})),
+            React.createElement('td',{style:{color:'var(--yellow)'}},fmt(c.predicted_ic50_nM)),
+            React.createElement('td',null,React.createElement(ScoreBar,{value:c.similarity_to_parent,max:1,color:'var(--text2)'})),
+            React.createElement('td',null,fmt(c.mol_weight,1)),
+            React.createElement('td',null,fmt(c.logp)),
+            React.createElement('td',null,React.createElement(Flag,{val:c.is_novel,label:c.is_novel?'NEW':'KNOWN'}))
+          )))
+        )
+      )
+    )
+  );
+};
+
+// PROTAC
+const Protac=()=>{
+  const [tid,setTid]=useState('P00533');
+  const [e3,setE3]=useState('CRBN');
+  const [wh,setWh]=useState('');
+  const [n,setN]=useState(10);
+  const [res,setRes]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const [e3i,setE3i]=useState(null);
+  useEffect(()=>{req('/api/generate/protac/e3-ligases').then(setE3i).catch(()=>{});},[]);
+  const run=async()=>{
+    setLoading(true);setErr(null);
+    try{const d=await req('/api/generate/protac/sync',{method:'POST',body:JSON.stringify({target_uniprot:tid,e3_ligase:e3,warhead_smiles:wh||null,n_designs:n,linker_types:['peg_short','peg_long','alkyl_short','mixed'],max_mw:900})});setRes(d);}
+    catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+  return React.createElement('div',{className:'fi'},
+    React.createElement('div',{style:{fontFamily:'var(--display)',fontSize:18,color:'var(--cyan)',marginBottom:6,letterSpacing:2}},'PROTAC DESIGNER'),
+    React.createElement('div',{style:{color:'var(--text2)',fontSize:13,marginBottom:24}},'Assemble warhead + linker + E3 binder into bifunctional degraders'),
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'fg',style:{marginBottom:14}},
+        React.createElement('div',null,React.createElement('label',null,'Target UniProt ID'),React.createElement('input',{value:tid,onChange:e=>setTid(e.target.value)})),
+        React.createElement('div',null,
+          React.createElement('label',null,'E3 Ligase'),
+          React.createElement('select',{value:e3,onChange:e=>setE3(e.target.value)},
+            ...(e3i?Object.keys(e3i.e3_ligases):['CRBN','VHL','MDM2','IAP']).map(k=>React.createElement('option',{key:k,value:k},k))
+          )
+        ),
+        React.createElement('div',null,React.createElement('label',null,'N Designs'),React.createElement('input',{type:'number',value:n,onChange:e=>setN(+e.target.value),min:5,max:20})),
+        React.createElement('div',null,React.createElement('label',null,'Warhead SMILES (optional — auto from DB if blank)'),React.createElement('input',{value:wh,onChange:e=>setWh(e.target.value),placeholder:'Auto-selected',style:{fontFamily:'var(--mono)',fontSize:11}}))
+      ),
+      React.createElement('button',{className:'btn btn-g',onClick:run,disabled:loading},
+        loading?React.createElement(React.Fragment,null,React.createElement(Spin),'Designing (30-60s)...'):'⬢ Design PROTACs'),
+      err&&React.createElement('div',{className:'eb',style:{marginTop:12}},err)
+    ),
+    res&&!res.error&&React.createElement('div',{className:'card fi'},
+      React.createElement('div',{className:'ct',style:{marginBottom:4}},`${res.designs?.length||0} PROTAC Designs`),
+      React.createElement('div',{style:{fontFamily:'var(--mono)',fontSize:11,color:'var(--text2)',marginBottom:14}},
+        'E3: ',React.createElement('span',{style:{color:'var(--green)'}},res.e3_ligase),
+        '   Warhead pChEMBL: ',React.createElement('span',{style:{color:'var(--cyan)'}},res.warhead?.pchembl_value?.toFixed(2)||'—')
+      ),
+      React.createElement('div',{className:'tw'},
+        React.createElement('table',null,
+          React.createElement('thead',null,React.createElement('tr',null,...['SMILES','Score','pChEMBL','IC50 (nM)','MW','LogP','Linker','E3 Binder'].map(h=>React.createElement('th',{key:h},h)))),
+          React.createElement('tbody',null,...(res.designs||[]).map((d,i)=>React.createElement('tr',{key:i},
+            React.createElement('td',null,React.createElement(SC,{s:d.smiles})),
+            React.createElement('td',null,React.createElement(ScoreBar,{value:d.protac_score,max:10,color:'var(--green)'})),
+            React.createElement('td',null,React.createElement(ScoreBar,{value:d.predicted_pchembl,max:10,color:'var(--cyan)'})),
+            React.createElement('td',{style:{color:'var(--yellow)'}},fmt(d.predicted_ic50_nM)),
+            React.createElement('td',null,fmt(d.mol_weight,1)),
+            React.createElement('td',null,fmt(d.logp)),
+            React.createElement('td',{style:{color:'var(--text2)',fontSize:10}},d.linker_type),
+            React.createElement('td',{style:{color:'var(--green)',fontSize:10}},d.e3_binder_name)
+          )))
+        )
+      )
+    ),
+    res?.error&&React.createElement('div',{className:'eb'},res.error)
+  );
+};
+
+// SCORE
+const Score=()=>{
+  const [smiles,setSmiles]=useState('CCOc1cc2ncnc(Nc3cccc(Cl)c3F)c2cc1OCC\nCC(=O)Oc1ccccc1C(=O)O\nCCOc1cc2ncnc(Nc3ccncc3)c2cc1OCC.Cl.F');
+  const [res,setRes]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const [exp,setExp]=useState(null);
+  const run=async()=>{
+    const list=smiles.split('\n').map(s=>s.trim()).filter(Boolean);
+    setLoading(true);setErr(null);
+    try{const d=await req('/api/score',{method:'POST',body:JSON.stringify({smiles:list,rank_by:'composite_score'})});setRes(d);}
+    catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+  const ac=flags=>{
+    if(!flags)return'var(--text3)';
+    const b=[flags.herg_risk,flags.mutagenicity_risk].filter(Boolean).length;
+    return b>=2?'var(--red)':b===1?'var(--yellow)':'var(--green)';
+  };
+  const dl=()=>{
+    if(!res)return;
+    const csv=['smiles,composite,qed,sa_score,admet,novelty,desalted'].concat(
+      (res.results||[]).filter(r=>r.valid).map(r=>`"${r.smiles}",${r.composite_score},${r.qed_score},${r.sa_score},${r.admet_score},${r.novelty_score},${r.was_desalted}`)
+    ).join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='scores.csv';a.click();
+  };
+  return React.createElement('div',{className:'fi'},
+    React.createElement('div',{style:{fontFamily:'var(--display)',fontSize:18,color:'var(--cyan)',marginBottom:6,letterSpacing:2}},'SCORE & RANK'),
+    React.createElement('div',{style:{color:'var(--text2)',fontSize:13,marginBottom:24}},'QED · SA Score · ADMET · Novelty · Composite. Auto-desalts input.'),
+    React.createElement('div',{className:'card'},
+      React.createElement('label',null,'SMILES (one per line)'),
+      React.createElement('textarea',{value:smiles,onChange:e=>setSmiles(e.target.value),rows:5,style:{fontFamily:'var(--mono)',fontSize:11,marginBottom:12}}),
+      React.createElement('button',{className:'btn btn-p',onClick:run,disabled:loading},
+        loading?React.createElement(React.Fragment,null,React.createElement(Spin),'Scoring...'):'◈ Score & Rank'),
+      err&&React.createElement('div',{className:'eb',style:{marginTop:12}},err)
+    ),
+    res&&React.createElement('div',{className:'card fi'},
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}},
+        React.createElement('div',{className:'ct',style:{marginBottom:0}},`${res.total_valid}/${res.total_submitted} valid · ranked by composite score`),
+        React.createElement('button',{className:'btn btn-sm btn-p',onClick:dl},'↓ CSV')
+      ),
+      React.createElement('div',{className:'tw'},
+        React.createElement('table',null,
+          React.createElement('thead',null,React.createElement('tr',null,...['SMILES','Composite','QED','SA Score','ADMET','Novelty','Desalted',''].map(h=>React.createElement('th',{key:h},h)))),
+          React.createElement('tbody',null,
+            ...(res.results||[]).filter(r=>r.valid).flatMap((r,i)=>[
+              React.createElement('tr',{key:`r${i}`},
+                React.createElement('td',null,React.createElement(SC,{s:r.smiles})),
+                React.createElement('td',null,React.createElement(ScoreBar,{value:r.composite_score,max:1,color:'var(--cyan)'})),
+                React.createElement('td',null,React.createElement(ScoreBar,{value:r.qed_score,max:1,color:'var(--green)'})),
+                React.createElement('td',null,React.createElement('div',{className:'sbw'},
+                  React.createElement('div',{className:'sb'},React.createElement('div',{className:'sbf',style:{width:`${Math.min(100,(1-(r.sa_score-1)/9)*100)}%`,background:'var(--yellow)'}})),
+                  React.createElement('span',{className:'sv',style:{color:'var(--yellow)'}},r.sa_score?.toFixed(2)||'—')
+                )),
+                React.createElement('td',null,React.createElement(ScoreBar,{value:r.admet_score,max:1,color:ac(r.admet_flags)})),
+                React.createElement('td',null,React.createElement(ScoreBar,{value:r.novelty_score,max:1,color:'var(--text2)'})),
+                React.createElement('td',null,React.createElement(Flag,{val:r.was_desalted,good:!r.was_desalted,label:r.was_desalted?'CLEANED':'CLEAN'})),
+                React.createElement('td',null,React.createElement('button',{className:'btn btn-sm',style:{border:'1px solid var(--border)',color:'var(--text2)'},onClick:()=>setExp(exp===i?null:i)},exp===i?'▲':'▼'))
+              ),
+              exp===i&&React.createElement('tr',{key:`d${i}`},
+                React.createElement('td',{colSpan:8,style:{padding:'0 0 8px 0'}},
+                  React.createElement('div',{className:'dp fi'},
+                    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
+                      ...[['MW',r.mol_weight?.toFixed(1)],['LogP',r.logp?.toFixed(2)],['TPSA',r.tpsa?.toFixed(1)],['Rot Bonds',r.rotatable_bonds],['HBD',r.hbd],['HBA',r.hba],['Lipinski',r.passes_lipinski?'PASS':'FAIL'],['LogSw',r.admet_flags?.log_sw?.toFixed(2)]].map(([k,v])=>
+                        React.createElement('div',{key:k,className:'di'},React.createElement('label',null,k),React.createElement('div',{className:'dv'},v??'—'))
+                      )
+                    ),
+                    React.createElement('div',{style:{fontFamily:'var(--mono)',fontSize:11,color:'var(--text2)',marginBottom:8}},'ADMET FLAGS'),
+                    React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:6}},
+                      ...Object.entries(r.admet_flags||{}).filter(([k])=>k!=='log_sw').map(([k,v])=>{
+                        if(typeof v==='string')return React.createElement('span',{key:k,className:'flag f-w',style:{fontSize:10}},`${k.replace(/_/g,' ')}: ${v}`);
+                        const isRisk=k.includes('risk');const good=isRisk?!v:!!v;
+                        return React.createElement(Flag,{key:k,val:good,label:`${k.replace(/_/g,' ')}: ${v?'Y':'N'}`});
+                      })
+                    )
+                  )
+                )
+              )
+            ])
+          )
+        )
+      )
+    )
+  );
+};
+
+// APP
+const App=()=>{
+  const [page,setPage]=useState('dash');
+  const [health,setHealth]=useState(null);
+  useEffect(()=>{req('/api/health').then(setHealth).catch(()=>setHealth({status:'offline'}));},[]);
+  const pages={dash:React.createElement(Dash,{health}),search:React.createElement(Search),predict:React.createElement(Predict),scaffold:React.createElement(Scaffold),protac:React.createElement(Protac),score:React.createElement(Score)};
+  const online=health?.status==='healthy';
+  return React.createElement('div',{className:'app'},
+    React.createElement('header',{className:'header'},
+      React.createElement('div',{className:'logo'},'PROTAC',React.createElement('span',null,'·'),'DESIGNER'),
+      React.createElement('div',{className:'hst'},
+        React.createElement('div',{className:'sdot',style:{background:online?'var(--green)':'var(--red)',boxShadow:`0 0 8px ${online?'var(--green)':'var(--red)'}`}}),
+        React.createElement('span',null,online?'SERVER ONLINE':'CONNECTING...'),
+        React.createElement('span',{style:{color:'var(--border2)'}},'|'),
+        React.createElement('span',null,`COMPOUNDS: ${health?.db_compounds??'—'}`),
+        React.createElement('span',{style:{color:'var(--border2)'}},'|'),
+        React.createElement('span',null,`MODEL: ${health?.model_loaded?'LOADED':'OFFLINE'}`)
+      )
+    ),
+    React.createElement('div',{className:'main'},
+      React.createElement(Sidebar,{page,set:setPage}),
+      React.createElement('main',{className:'content'},pages[page]||pages.dash)
+    )
+  );
+};
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
