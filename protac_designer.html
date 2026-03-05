@@ -92,7 +92,7 @@ tr:hover td{background:rgba(0,229,255,.02)}
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useRef}=React;
-const API='http://localhost:8000';
+const API='http://protac-module.onrender.com';
 const req=async(path,opts={})=>{
   const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
   if(!r.ok){const e=await r.json().catch(()=>({detail:r.statusText}));throw new Error(e.detail||'Error');}
