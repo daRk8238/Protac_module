@@ -4,5 +4,4 @@ __pycache__/
 .env
 protac_designer.db
 data/structures/
-models/outputs/
 *.log
