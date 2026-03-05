@@ -5,5 +5,4 @@ __pycache__/
 protac_designer.db
 data/structures/
 models/outputs/
-*.pt
 *.log
